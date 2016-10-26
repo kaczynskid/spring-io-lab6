@@ -9,11 +9,16 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,26 +45,27 @@ public class ReservationServiceApplication {
 @RequestMapping("/reservations")
 class ReservationController {
 
-    final Map<String, Reservation> reservations = new HashMap<>();
+    private final ReservationRepository reservations;
 
-    public ReservationController() {
+    public ReservationController(ReservationRepository repository) {
+        this.reservations = repository;
         Arrays.stream("Jarek,Piotr,Marek,Mateusz,Maciek".split(","))
             .map(Reservation::new)
-            .forEach(reservation -> reservations.put(reservation.name, reservation));
+            .forEach(reservations::save);
     }
 
     @RequestMapping(method = GET)
 	public Collection<Reservation> list() {
-        return reservations.values();
+        return reservations.findAll();
 	}
 
     @RequestMapping(method = POST)
 	public ResponseEntity<Void> create(@RequestBody Reservation reservation) {
-        if (reservations.containsKey(reservation.name)) {
+        if (reservations.findByName(reservation.name) != null) {
             throw new ReservationAlreadyExists();
         }
 
-        reservations.put(reservation.name, reservation);
+        reservations.save(reservation);
 
         return ResponseEntity.created(selfURI(reservation)).build();
     }
@@ -72,10 +78,11 @@ class ReservationController {
 
     @RequestMapping(path = "/{name}", method = GET)
     public ResponseEntity<?> get(@PathVariable("name") String name) {
-        if (reservations.containsKey(name)) {
+        Reservation reservation = reservations.findByName(name);
+        if (reservation != null) {
             return ResponseEntity.ok()
                 .header("X-Reservation-Grats", "Well done!")
-                .body(reservations.get(name));
+                .body(reservation);
         }
         return ResponseEntity.notFound()
             .header("X-Reservation-Apology", "Sorry man ;)").build();
@@ -84,7 +91,10 @@ class ReservationController {
     @RequestMapping(path = "/{name}", method = DELETE)
     @ResponseStatus(NO_CONTENT)
     public void delete(@PathVariable("name") String name) {
-        reservations.remove(name);
+        Reservation reservation = reservations.findByName(name);
+        if (reservation != null) {
+            reservations.delete(reservation);
+        }
     }
 }
 
@@ -92,10 +102,27 @@ class ReservationController {
 class ReservationAlreadyExists extends RuntimeException {
 }
 
+interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    Reservation findByName(String name);
+}
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Entity
+@Table(uniqueConstraints = {
+    @UniqueConstraint(columnNames = "name")
+})
 class Reservation {
 
+    @Id
+    @GeneratedValue
+    Long id;
+
 	String name;
+
+    Reservation(String name) {
+        this.name = name;
+    }
 }
