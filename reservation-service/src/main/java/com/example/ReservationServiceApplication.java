@@ -19,6 +19,9 @@ import javax.persistence.UniqueConstraint;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,7 +45,7 @@ public class ReservationServiceApplication {
 
 @Slf4j
 @RestController
-@RequestMapping("/reservations")
+@RequestMapping("/custom-reservations")
 class ReservationController {
 
     private final ReservationRepository reservations;
@@ -102,9 +105,15 @@ class ReservationController {
 class ReservationAlreadyExists extends RuntimeException {
 }
 
+@RepositoryRestResource
 interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    Reservation findByName(String name);
+    @RestResource(path = "by-name", rel = "find-by-name")
+    Reservation findByName(@Param("name")String name);
+
+    @RestResource(exported = false)
+    @Override
+    void delete(Long id);
 }
 
 @NoArgsConstructor
