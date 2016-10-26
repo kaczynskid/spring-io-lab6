@@ -16,6 +16,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,6 +26,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,17 +47,37 @@ public class ReservationServiceApplication {
 }
 
 @Slf4j
+@Component
+class ReservationsInitializer implements ApplicationRunner {
+
+    private final ReservationRepository reservations;
+
+    public ReservationsInitializer(ReservationRepository reservations) {
+        this.reservations = reservations;
+    }
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        log.info("Starting initialization...");
+        Arrays.stream("Jarek,Piotr,Marek,Mateusz,Maciek".split(","))
+            .map(Reservation::new)
+            .forEach(reservation -> {
+                log.info("Saving {}...", reservation.name);
+                reservations.save(reservation);
+            });
+        log.info("Initialization done.");
+    }
+}
+
+@Slf4j
 @RestController
 @RequestMapping("/custom-reservations")
 class ReservationController {
 
     private final ReservationRepository reservations;
 
-    public ReservationController(ReservationRepository repository) {
-        this.reservations = repository;
-        Arrays.stream("Jarek,Piotr,Marek,Mateusz,Maciek".split(","))
-            .map(Reservation::new)
-            .forEach(reservations::save);
+    public ReservationController(ReservationRepository reservations) {
+        this.reservations = reservations;
     }
 
     @RequestMapping(method = GET)
