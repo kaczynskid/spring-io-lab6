@@ -1,5 +1,6 @@
 package com.example;
 
+import static java.lang.String.format;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
@@ -24,6 +25,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -44,6 +48,18 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+}
+
+@Component
+class ReservationResourceProcessor implements ResourceProcessor<Resource<Reservation>> {
+
+    @Override
+    public Resource<Reservation> process(Resource<Reservation> resource) {
+        Reservation reservation = resource.getContent();
+        String url = format("https://www.google.pl/search?tbm=isch&q=%s", reservation.getName());
+        resource.add(new Link(url, "photo"));
+        return resource;
+    }
 }
 
 @Slf4j
