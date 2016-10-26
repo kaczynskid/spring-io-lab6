@@ -6,6 +6,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,12 +54,20 @@ class ReservationController {
 	}
 
     @RequestMapping(method = POST)
-	public void create(@RequestBody Reservation reservation) {
+	public ResponseEntity<Void> create(@RequestBody Reservation reservation) {
         if (reservations.containsKey(reservation.name)) {
             throw new ReservationAlreadyExists();
         }
 
         reservations.put(reservation.name, reservation);
+
+        return ResponseEntity.created(selfURI(reservation)).build();
+    }
+
+    private URI selfURI(Reservation reservation) {
+        return ControllerLinkBuilder.linkTo(
+            ControllerLinkBuilder.methodOn(ReservationController.class).get(reservation.name))
+            .toUri();
     }
 
     @RequestMapping(path = "/{name}", method = GET)
