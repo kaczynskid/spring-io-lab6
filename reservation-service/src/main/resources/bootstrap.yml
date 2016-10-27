@@ -1,0 +1,15 @@
+my:
+  app:
+    id: reservation-${random.value}
+
+info:
+  artifactid: @project.artifactId@
+  version: @project.version@
+  instanceId: ${my.app.id}
+
+spring:
+  application:
+    name: reservationservice
+  cloud:
+    config:
+      uri: http://localhost:8888
