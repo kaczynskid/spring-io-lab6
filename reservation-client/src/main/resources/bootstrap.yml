@@ -1,0 +1,21 @@
+info:
+  artifactid: @project.artifactId@
+  version: @project.version@
+
+spring:
+  profiles:
+    active: cloud
+  application:
+    name: reservationclient
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: configservice
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8765/eureka/
