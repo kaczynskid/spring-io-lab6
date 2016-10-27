@@ -2,9 +2,22 @@ info:
   artifactid: @project.artifactId@
   version: @project.version@
 
+server:
+  port: 8765
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8765/eureka/
+
 spring:
   application:
     name: registryservice
   cloud:
     config:
       uri: http://localhost:8888
+  boot:
+    admin:
+      context-path: /admin
