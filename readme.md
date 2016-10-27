@@ -1,0 +1,1 @@
+slajdy: https://docs.google.com/presentation/d/1CZAKgJB0Pisavce1C7TB0c9l6f_8Q56GnuxOfxAqVgw/edit?usp=sharing
