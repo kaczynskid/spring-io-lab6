@@ -15,9 +15,6 @@ eureka:
 spring:
   application:
     name: registryservice
-  cloud:
-    config:
-      uri: http://localhost:8888
   boot:
     admin:
       context-path: /admin
