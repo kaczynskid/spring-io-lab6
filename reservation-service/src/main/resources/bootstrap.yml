@@ -8,6 +8,8 @@ info:
   instanceId: ${my.app.id}
 
 spring:
+  profiles:
+    active: cloud
   application:
     name: reservationservice
   cloud:
