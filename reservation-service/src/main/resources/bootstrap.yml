@@ -14,4 +14,13 @@ spring:
     name: reservationservice
   cloud:
     config:
-      uri: http://localhost:8888
+      discovery:
+        enabled: true
+        service-id: configservice
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8765/eureka/

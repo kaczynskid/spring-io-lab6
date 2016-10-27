@@ -9,6 +9,13 @@ spring:
 server:
   port: 8888
 
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8765/eureka/
+
 ---
 
 spring:
