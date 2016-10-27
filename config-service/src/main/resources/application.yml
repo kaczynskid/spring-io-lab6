@@ -1,3 +1,7 @@
+info:
+  artifactid: @project.artifactId@
+  version: @project.version@
+
 spring:
   application:
     name: configservice

@@ -1,0 +1,10 @@
+info:
+  artifactid: @project.artifactId@
+  version: @project.version@
+
+spring:
+  application:
+    name: registryservice
+  cloud:
+    config:
+      uri: http://localhost:8888
