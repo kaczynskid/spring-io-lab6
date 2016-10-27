@@ -25,9 +25,14 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.HandleAfterCreate;
+import org.springframework.data.rest.core.annotation.HandleAfterDelete;
+import org.springframework.data.rest.core.annotation.HandleAfterSave;
+import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.hateoas.Link;
@@ -53,6 +58,38 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+}
+
+@Slf4j
+@Component
+@RepositoryEventHandler
+class ReservationEventHandler {
+
+    private final CounterService counter;
+
+    public ReservationEventHandler(CounterService counter) {
+        this.counter = counter;
+    }
+
+    @HandleAfterCreate
+    public void create(Reservation reservation) {
+        log.info("Created redervation for {}.", reservation.name);
+        counter.increment("count");
+        counter.increment("create");
+    }
+
+    @HandleAfterSave
+    public void save(Reservation reservation) {
+        log.info("Updated redervation for {}.", reservation.name);
+        counter.increment("save");
+    }
+
+    @HandleAfterDelete
+    public void delete(Reservation reservation) {
+        log.info("Removed redervation for {}.", reservation.name);
+        counter.decrement("count");
+        counter.increment("delete");
+    }
 }
 
 @Component
@@ -90,9 +127,11 @@ class ReservationResourceProcessor implements ResourceProcessor<Resource<Reserva
 class ReservationsInitializer implements ApplicationRunner {
 
     private final ReservationRepository reservations;
+    private final CounterService counter;
 
-    public ReservationsInitializer(ReservationRepository reservations) {
+    public ReservationsInitializer(ReservationRepository reservations, CounterService counter) {
         this.reservations = reservations;
+        this.counter = counter;
     }
 
     @Override
@@ -103,6 +142,7 @@ class ReservationsInitializer implements ApplicationRunner {
             .forEach(reservation -> {
                 log.info("Saving {}...", reservation.name);
                 reservations.save(reservation);
+                counter.increment("count");
             });
         log.info("Initialization done.");
     }
