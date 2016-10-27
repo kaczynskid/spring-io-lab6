@@ -1,6 +1,7 @@
 package com.example;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
@@ -20,6 +21,10 @@ import javax.persistence.UniqueConstraint;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.info.Info;
+import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -48,6 +53,24 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+}
+
+@Component
+class ReservationHealth implements HealthIndicator {
+
+    @Override
+    public Health health() {
+        return Health.status("This app is UP").build();
+    }
+}
+
+@Component
+class ReservationInfo implements InfoContributor {
+
+    @Override
+    public void contribute(Info.Builder builder) {
+        builder.withDetail("currentTime", currentTimeMillis()).build();
+    }
 }
 
 @Component
