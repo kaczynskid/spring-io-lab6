@@ -3,6 +3,7 @@ package com.example;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.net.URI;
 import java.util.List;
@@ -19,14 +20,21 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.cloud.netflix.feign.FeignClient;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.annotation.Output;
+import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -41,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @EnableDiscoveryClient
 @EnableFeignClients
 @EnableCircuitBreaker
+@EnableBinding(Source.class)
 public class ReservationClientApplication {
 
 	public static void main(String[] args) {
@@ -152,6 +161,17 @@ class ReservationsController {
         return service.listReservationsSafely().getContent().stream()
             .map(Reservation::getName)
             .collect(toList());
+    }
+
+    @Autowired
+    @Output(Source.OUTPUT)
+    private MessageChannel out;
+
+    @RequestMapping(method = POST)
+    public void createReservation(@RequestBody Reservation reservation) {
+        log.info("Sending message to create reservation for {}", reservation.name);
+        Message<String> message = MessageBuilder.withPayload(reservation.getName()).build();
+        out.send(message);
     }
 }
 
