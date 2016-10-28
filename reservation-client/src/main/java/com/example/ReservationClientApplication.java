@@ -63,10 +63,12 @@ class ReservationsController {
 
     private final DiscoveryClient discovery;
     private final RestTemplate rest;
+    private final ReservationsClient feignClient;
 
-    public ReservationsController(DiscoveryClient discovery, RestTemplate rest) {
+    public ReservationsController(DiscoveryClient discovery, RestTemplate rest, ReservationsClient feignClient) {
         this.discovery = discovery;
         this.rest = rest;
+        this.feignClient = feignClient;
     }
 
     @RequestMapping(path = "/byName/{name}", method = GET)
@@ -93,26 +95,21 @@ class ReservationsController {
     @RequestMapping(path = "/names", method = GET)
     public List<String> names() {
         log.info("Calling names...");
-
         ParameterizedTypeReference<Resources<Reservation>> responseType =
             new ParameterizedTypeReference<Resources<Reservation>>() {};
-
         ResponseEntity<Resources<Reservation>> exchange =
             rest.exchange("http://reservationservice/reservations", HttpMethod.GET, null, responseType);
-
         return exchange.getBody().getContent().stream()
             .map(Reservation::getName)
             .collect(Collectors.toList());
     }
 
-    @Autowired
-    private ReservationsClient feignClient;
-
     @RequestMapping(path = "/feign-names", method = GET)
     public List<String> feignNames() {
         log.info("Calling feign-names...");
         return feignClient.listReservations().getContent().stream()
-            .map(Reservation::getName).collect(Collectors.toList());
+            .map(Reservation::getName)
+            .collect(Collectors.toList());
     }
 }
 
