@@ -188,12 +188,15 @@ class ReservationController {
 
     @RequestMapping(path = "/{name}", method = GET)
     public ResponseEntity<?> get(@PathVariable("name") String name) {
+        log.info("get");
         Reservation reservation = reservations.findByName(name);
         if (reservation != null) {
+            log.info("found");
             return ResponseEntity.ok()
                 .header("X-Reservation-Grats", "Well done!")
                 .body(reservation);
         }
+        log.info("not found");
         return ResponseEntity.notFound()
             .header("X-Reservation-Apology", "Sorry man ;)").build();
     }

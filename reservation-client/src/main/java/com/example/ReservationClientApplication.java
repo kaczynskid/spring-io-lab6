@@ -106,6 +106,7 @@ class ReservationsController {
 
     @RequestMapping(path = "/byName/{name}", method = GET)
     ResponseEntity<Reservation> getReservationByName(@PathVariable("name") String name) {
+        log.info("calling getReservationByName");
         return new RestTemplate().getForEntity(
             url().toString() + "/custom-reservations/" + name,
             Reservation.class);
