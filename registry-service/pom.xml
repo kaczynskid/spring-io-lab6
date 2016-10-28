@@ -53,6 +53,11 @@
 			<artifactId>spring-boot-admin-server-ui</artifactId>
 			<version>${spring.admin-server.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.logstash.logback</groupId>
+			<artifactId>logstash-logback-encoder</artifactId>
+			<version>4.5.1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
