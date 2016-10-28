@@ -15,6 +15,8 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.netflix.feign.EnableFeignClients;
+import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Resource;
@@ -34,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+@EnableFeignClients
 public class ReservationClientApplication {
 
 	public static void main(String[] args) {
@@ -44,6 +47,13 @@ public class ReservationClientApplication {
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+}
+
+@FeignClient("reservationservice")
+interface ReservationsClient {
+
+    @RequestMapping(path = "/reservations", method = GET)
+    Resources<Reservation> listReservations();
 }
 
 @Slf4j
@@ -90,7 +100,19 @@ class ReservationsController {
         ResponseEntity<Resources<Reservation>> exchange =
             rest.exchange("http://reservationservice/reservations", HttpMethod.GET, null, responseType);
 
-        return exchange.getBody().getContent().stream().map(Reservation::getName).collect(Collectors.toList());
+        return exchange.getBody().getContent().stream()
+            .map(Reservation::getName)
+            .collect(Collectors.toList());
+    }
+
+    @Autowired
+    private ReservationsClient feignClient;
+
+    @RequestMapping(path = "/feign-names", method = GET)
+    public List<String> feignNames() {
+        log.info("Calling feign-names...");
+        return feignClient.listReservations().getContent().stream()
+            .map(Reservation::getName).collect(Collectors.toList());
     }
 }
 
