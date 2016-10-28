@@ -4,6 +4,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -13,6 +14,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -33,8 +39,14 @@ public class ReservationClientApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationClientApplication.class, args);
 	}
+
+    @Bean @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }
 
+@Slf4j
 @RestController
 @RequestMapping("/reservations")
 class ReservationsController {
@@ -42,14 +54,14 @@ class ReservationsController {
     private final DiscoveryClient discovery;
     private final RestTemplate rest;
 
-    public ReservationsController(DiscoveryClient discovery) {
+    public ReservationsController(DiscoveryClient discovery, RestTemplate rest) {
         this.discovery = discovery;
-        this.rest = new RestTemplate();
+        this.rest = rest;
     }
 
-    @RequestMapping(path = "/{name}", method = GET)
-    ResponseEntity<Reservation> gteReservation(@PathVariable("name") String name) {
-        return rest.getForEntity(
+    @RequestMapping(path = "/byName/{name}", method = GET)
+    ResponseEntity<Reservation> getReservationByName(@PathVariable("name") String name) {
+        return new RestTemplate().getForEntity(
             url().toString() + "/custom-reservations/" + name,
             Reservation.class);
     }
@@ -58,6 +70,27 @@ class ReservationsController {
         return discovery.getInstances("reservationservice").stream()
             .findFirst().map(ServiceInstance::getUri)
             .orElseThrow(NoReservationsServiceAvailable::new);
+    }
+
+    @RequestMapping(path = "/byId/{id}", method = GET)
+    ResponseEntity<Resource<Reservation>> getReservationById(@PathVariable("id") Long id) {
+        // FIXME marshaling !!!
+        ParameterizedTypeReference<Resource<Reservation>> responseType =
+            new ParameterizedTypeReference<Resource<Reservation>>() { };
+        return rest.exchange("http://reservationservice/reservations/{id}", HttpMethod.GET, null, responseType, id);
+    }
+
+    @RequestMapping(path = "/names", method = GET)
+    public List<String> names() {
+        log.info("Calling names...");
+
+        ParameterizedTypeReference<Resources<Reservation>> responseType =
+            new ParameterizedTypeReference<Resources<Reservation>>() {};
+
+        ResponseEntity<Resources<Reservation>> exchange =
+            rest.exchange("http://reservationservice/reservations", HttpMethod.GET, null, responseType);
+
+        return exchange.getBody().getContent().stream().map(Reservation::getName).collect(Collectors.toList());
     }
 }
 

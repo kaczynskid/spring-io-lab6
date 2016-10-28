@@ -1,11 +1,7 @@
-my:
-  app:
-    id: reservation-${random.value}
-
 info:
   artifactid: @project.artifactId@
   version: @project.version@
-  instanceId: ${my.app.id}
+  instanceId: ${spring.application.name}-${random.value}
 
 spring:
   profiles:
@@ -21,6 +17,7 @@ spring:
 eureka:
   instance:
     preferIpAddress: true
+    instanceId: ${info.instanceId}
   client:
     serviceUrl:
       defaultZone: http://localhost:8765/eureka/

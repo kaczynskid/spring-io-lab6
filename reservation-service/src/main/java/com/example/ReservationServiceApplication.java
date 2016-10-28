@@ -27,6 +27,7 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.HandleAfterCreate;
@@ -128,10 +129,14 @@ class ReservationsInitializer implements ApplicationRunner {
 
     private final ReservationRepository reservations;
     private final CounterService counter;
+    private final Environment environment;
 
-    public ReservationsInitializer(ReservationRepository reservations, CounterService counter) {
+    public ReservationsInitializer(ReservationRepository reservations,
+                                   CounterService counter,
+                                   Environment environment) {
         this.reservations = reservations;
         this.counter = counter;
+        this.environment = environment;
     }
 
     @Override
@@ -141,7 +146,7 @@ class ReservationsInitializer implements ApplicationRunner {
             .map(Reservation::new)
             .forEach(reservation -> {
                 log.info("Saving {}...", reservation.name);
-                reservations.save(reservation);
+                reservations.save(new Reservation(reservation.name + " " + environment.getProperty("info.instanceId")));
                 counter.increment("count");
             });
         log.info("Initialization done.");
